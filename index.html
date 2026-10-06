@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discord Server Hub</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: linear-gradient(180deg, #0a0a15 0%, #1a0a2e 100%); color: #fff; font-family: Arial, sans-serif; min-height: 100vh; padding: 20px 16px 40px; }
+.header { text-align: center; margin-bottom: 24px; padding-top: 10px; }
+.header h1 { font-size: 26px; font-weight: 900; letter-spacing: 2px; background: linear-gradient(90deg, #5865F2, #7289DA, #5865F2); background-size: 300% 100%; animation: slide 4s linear infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+@keyframes slide { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+.header p { font-size: 12px; color: #8e8e93; letter-spacing: 1.5px; margin-top: 8px; }
+.search-wrap { position: relative; max-width: 600px; margin: 0 auto 20px; }
+.search-box { width: 100%; padding: 14px 44px 14px 46px; background: rgba(30,30,50,0.7); border: 2px solid rgba(88,101,242,0.4); border-radius: 14px; color: #fff; font-size: 15px; font-family: inherit; outline: none; }
+.search-box:focus { border-color: #5865F2; box-shadow: 0 0 20px rgba(88,101,242,0.4); }
+.search-box::placeholder { color: #6b7280; }
+.search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+.clear-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: #fff; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; display: none; font-size: 14px; }
+.clear-btn.show { display: flex; align-items: center; justify-content: center; }
+.filters { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; flex-wrap: wrap; }
+.filter-btn { padding: 8px 18px; border-radius: 20px; background: rgba(30,30,50,0.7); border: 1px solid rgba(88,101,242,0.4); color: #c4b5fd; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.filter-btn.active { background: linear-gradient(135deg, #5865F2, #7289DA); color: #fff; border-color: #5865F2; box-shadow: 0 0 16px rgba(88,101,242,0.5); }
+.stats-bar { text-align: center; font-size: 12px; color: #8e8e93; margin-bottom: 14px; }
+.stats-bar b { color: #5865F2; }
+.list { max-width: 700px; margin: 0 auto; display: grid; gap: 14px; }
+.server-card { background: rgba(20,20,35,0.7); border: 1px solid rgba(88,101,242,0.2); border-radius: 16px; padding: 16px; display: flex; gap: 14px; align-items: center; cursor: pointer; transition: all 0.15s; text-decoration: none; color: #fff; }
+.server-card:hover { background: rgba(40,30,70,0.9); border-color: #5865F2; transform: translateY(-3px); box-shadow: 0 10px 30px rgba(88,101,242,0.3); }
+.server-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.server-info { flex: 1; min-width: 0; }
+.server-name { font-size: 16px; font-weight: 900; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.server-verified { font-size: 10px; padding: 2px 6px; background: rgba(88,101,242,0.3); border-radius: 4px; color: #7289DA; font-weight: 800; }
+.server-desc { font-size: 13px; color: #8e8e93; margin-bottom: 8px; line-height: 1.4; }
+.server-meta { display: flex; gap: 14px; font-size: 11px; color: #6b7280; }
+.server-join { font-size: 12px; padding: 8px 16px; background: linear-gradient(135deg, #5865F2, #7289DA); color: #fff; border-radius: 20px; font-weight: 900; flex-shrink: 0; }
+.empty { text-align: center; padding: 60px 20px; color: #6b7280; }
+.empty .big { font-size: 60px; margin-bottom: 16px; }
+.footer { text-align: center; font-size: 11px; color: #4b5563; margin-top: 30px; letter-spacing: 1.5px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎮 DISCORD SERVER HUB</h1>
+  <p>TÌM VÀ THAM GIA SERVER DISCORD</p>
+</div>
+
+<div class="search-wrap">
+  <span class="search-icon">🔍</span>
+  <input type="text" id="searchInput" class="search-box" placeholder="Tìm server...">
+  <button class="clear-btn" id="clearBtn">✕</button>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" data-filter="all">TẤT CẢ</button>
+  <button class="filter-btn" data-filter="game">🎮 GAME</button>
+  <button class="filter-btn" data-filter="anime">🎌 ANIME</button>
+  <button class="filter-btn" data-filter="music">🎵 NHẠC</button>
+  <button class="filter-btn" data-filter="chat">💬 CHAT</button>
+  <button class="filter-btn" data-filter="vn">🇻🇳 VIỆT NAM</button>
+</div>
+
+<div class="stats-bar" id="statsBar">Đang tải...</div>
+<div class="list" id="serverList"></div>
+<div class="footer">👑 DISCORD SERVER HUB</div>
+
+<script>
+var SERVERS = [
+  { name: 'Discord Vietnam', desc: 'Cộng đồng Discord Việt Nam lớn nhất - chat, chơi game, kết bạn', icon: '🇻🇳', color: 'linear-gradient(135deg, #da251d, #ffcd00)', members: '45K', online: '2.3K', category: 'vn', invite: 'https://discord.gg/vietnam', verified: true },
+  { name: 'Game Thủ VN', desc: 'Nơi tụ tập game thủ - Liên Quân, Free Fire, PUBG, Valorant', icon: '🎮', color: 'linear-gradient(135deg, #5865F2, #7289DA)', members: '32K', online: '1.8K', category: 'game', invite: 'https://discord.gg/gamethu', verified: true },
+  { name: 'Anime Vietnam', desc: 'Cộng đồng otaku Việt - thảo luận anime, manga, cosplay', icon: '🎌', color: 'linear-gradient(135deg, #ec4899, #f472b6)', members: '28K', online: '1.2K', category: 'anime', invite: 'https://discord.gg/animevn', verified: true },
+  { name: 'Music Lovers', desc: 'Chia sẻ nhạc, nghe nhạc chung, bot nhạc 24/7', icon: '🎵', color: 'linear-gradient(135deg, #06b6d4, #22d3ee)', members: '18K', online: '890', category: 'music', invite: 'https://discord.gg/musiclovers', verified: false },
+  { name: 'Chill Corner', desc: 'Nơi chill, chat nhẹ nhàng, tâm sự buồn vui', icon: '😌', color: 'linear-gradient(135deg, #10b981, #34d399)', members: '12K', online: '540', category: 'chat', invite: 'https://discord.gg/chillcorner', verified: false },
+  { name: 'Valorant Vietnam', desc: 'Tìm team Valorant, giải đấu, skin trade', icon: '🎯', color: 'linear-gradient(135deg, #ef4444, #f87171)', members: '22K', online: '1.4K', category: 'game', invite: 'https://discord.gg/valorantvn', verified: true },
+  { name: 'Genshin Impact VN', desc: 'Cộng đồng Genshin Việt - coop, roll, build', icon: '⚔️', color: 'linear-gradient(135deg, #8b5cf6, #a78bfa)', members: '35K', online: '2.1K', category: 'game', invite: 'https://discord.gg/genshinvn', verified: true },
+  { name: 'Minecraft VN', desc: 'Server Minecraft Việt - survival, creative, minigame', icon: '⛏️', color: 'linear-gradient(135deg, #22c55e, #4ade80)', members: '15K', online: '760', category: 'game', invite: 'https://discord.gg/minecraftvn', verified: false },
+  { name: 'Lofi Chill Music', desc: 'Nhạc lofi 24/7 - học bài, làm việc, thư giãn', icon: '🎧', color: 'linear-gradient(135deg, #a855f7, #ec4899)', members: '9.5K', online: '420', category: 'music', invite: 'https://discord.gg/lofichill', verified: false },
+  { name: 'Gaming Community', desc: 'Cộng đồng game đa dạng - Minecraft, Roblox, GTA', icon: '🕹️', color: 'linear-gradient(135deg, #f59e0b, #fbbf24)', members: '25K', online: '1.5K', category: 'game', invite: 'https://discord.gg/gamingcommunity', verified: true }
+];
+
+var currentFilter = 'all';
+var currentQuery = '';
+
+function escapeHtml(text) {
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderServers() {
+  var listEl = document.getElementById('serverList');
+  var statsEl = document.getElementById('statsBar');
+  var html = '';
+  var count = 0;
+
+  for (var i = 0; i < SERVERS.length; i++) {
+    var s = SERVERS[i];
+    if (currentFilter !== 'all' && s.category !== currentFilter) continue;
+    if (currentQuery) {
+      var q = currentQuery.toLowerCase();
+      var nameMatch = s.name.toLowerCase().indexOf(q) !== -1;
+      var descMatch = s.desc.toLowerCase().indexOf(q) !== -1;
+      if (!nameMatch && !descMatch) continue;
+    }
+    count++;
+    html += '<a class="server-card" href="' + s.invite + '" target="_blank" rel="noopener">' +
+      '<div class="server-icon" style="background:' + s.color + '">' + s.icon + '</div>' +
+      '<div class="server-info">' +
+        '<div class="server-name">' + escapeHtml(s.name) +
+          (s.verified ? '<span class="server-verified">✓ VERIFIED</span>' : '') +
+        '</div>' +
+        '<div class="server-desc">' + escapeHtml(s.desc) + '</div>' +
+        '<div class="server-meta">' +
+          '<span>👥 ' + s.members + '</span>' +
+          '<span>🟢 ' + s.online + ' online</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="server-join">THAM GIA →</div>' +
+      '</a>';
+  }
+
+  if (count === 0) {
+    listEl.innerHTML = '<div class="empty"><div class="big">🔍</div><p>Không tìm thấy server nào</p></div>';
+  } else {
+    listEl.innerHTML = html;
+  }
+
+  statsEl.innerHTML = 'Tìm thấy <b>' + count + '</b> / ' + SERVERS.length + ' server';
+}
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  currentQuery = this.value.trim();
+  document.getElementById('clearBtn').classList.toggle('show', currentQuery.length > 0);
+  renderServers();
+});
+
+document.getElementById('clearBtn').addEventListener('click', function() {
+  document.getElementById('searchInput').value = '';
+  currentQuery = '';
+  this.classList.remove('show');
+  document.getElementById('searchInput').focus();
+  renderServers();
+});
+
+var filterBtns = document.querySelectorAll('.filter-btn');
+for (var i = 0; i < filterBtns.length; i++) {
+  filterBtns[i].addEventListener('click', function() {
+    for (var j = 0; j < filterBtns.length; j++) filterBtns[j].classList.remove('active');
+    this.classList.add('active');
+    currentFilter = this.getAttribute('data-filter');
+    renderServers();
+  });
+}
+
+renderServers();
+</script>
+</body>
+</html>
